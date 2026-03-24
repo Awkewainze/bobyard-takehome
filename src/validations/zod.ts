@@ -10,6 +10,20 @@ export const zTake = z.coerce.number()
 	.default(20)
 	.catch(20);
 
+export const zOrderBy = z.literal(["id", "date"])
+	.optional()
+	.default("date")
+	.catch("date");
+
+export type zOrderByType = z.infer<typeof zOrderBy>;
+
+export const zAscOrDesc = z.literal(["asc", "desc"])
+	.optional()
+	.default("desc")
+	.catch("desc");
+
+export type zAscOrDescType = z.infer<typeof zAscOrDesc>;
+
 export const zCursor = z.coerce.number()
 	.optional()
 	.catch(undefined)

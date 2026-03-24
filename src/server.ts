@@ -2,7 +2,7 @@ import { serve } from "bun";
 import index from "./index.html";
 import { ZodType, type output } from "zod";
 import { Created, NoContent, NotFound, Ok, BadValidation } from "@/utils/api";
-import { zComment, zTake, zCursor, zId } from "@/validations/zod";
+import { zComment, zTake, zCursor, zId, zAscOrDesc, zOrderBy } from "@/validations/zod";
 import { PrismaClient } from "generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 
@@ -24,6 +24,8 @@ export const server = serve({
 			async GET(req) {
 				const { searchParams } = new URL(req.url);
 				const take = zTake.parse(searchParams.get("take"));
+				const orderBy = zOrderBy.parse(searchParams.get("orderBy"));
+				const ascOrDesc = zAscOrDesc.parse(searchParams.get("ascOrDesc"));
 				const cursorId = zCursor.parse(searchParams.get("cursor"));
 				const cursor = cursorId == undefined ? undefined : { id: cursorId };
 
@@ -32,7 +34,7 @@ export const server = serve({
 					skip: cursor == undefined ? 0 : 1,
 					cursor,
 					orderBy: {
-						date: "desc"
+						[orderBy]: ascOrDesc
 					}
 				});
 
