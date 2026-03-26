@@ -22,6 +22,7 @@ export const server = serve({
 	routes: {
 		"/api/comments": {
 			async GET(req) {
+
 				const { searchParams } = new URL(req.url);
 				const take = zTake.parse(searchParams.get("take"));
 				const orderBy = zOrderBy.parse(searchParams.get("orderBy"));
@@ -33,8 +34,39 @@ export const server = serve({
 					take,
 					skip: cursor == undefined ? 0 : 1,
 					cursor,
+					where: {
+						parentId: null
+					},
 					orderBy: {
 						[orderBy]: ascOrDesc
+					},
+					// TODO(nova) Switch to using Recursive Query (or better yet, split getting children to new call)
+					include: {
+						children: {
+							include: {
+								children: {
+									include: {
+										children: {
+											include: {
+												children: {
+													include: {
+														children: {
+															include: {
+																children: {
+																	include: {
+																		children: true
+																	}
+																}
+															}
+														}
+													}
+												}
+											}
+										}
+									}
+								}
+							}
+						}
 					}
 				});
 
@@ -52,6 +84,7 @@ export const server = serve({
 						author: parseResult.data.author,
 						text: parseResult.data.text,
 						image: parseResult.data.image,
+						parentId: parseResult.data.parentId,
 						likes: 0
 					}
 				});

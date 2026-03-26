@@ -8,7 +8,7 @@ import upvote from "@/assets/upvote.svg";
 import { Loading } from "./Loading";
 import { ImageWithFallback } from "./ImageWithFallback";
 
-export function Comment(props: { existingComment: API.Comment, updateFn: (comment: API.Comment | null) => void, cancelFn: () => void }) {
+export function Comment(props: { existingComment: API.CommentResponse, updateFn: (comment: API.CommentResponse | null) => void, cancelFn: () => void }) {
 	const { existingComment, updateFn, cancelFn } = props;
 	const isNew = existingComment.id == -1;
 
@@ -17,12 +17,15 @@ export function Comment(props: { existingComment: API.Comment, updateFn: (commen
 	const [text, setText] = useState<string>(existingComment.text ?? "");
 	const [imageUrl, setImageUrl] = useState(existingComment.image ?? "");
 	const [likes, setLikes] = useState(existingComment.likes ?? 0);
+	const [children, setChildren] = useState(existingComment.children);
 
 	const [errorText, setErrorText] = useState<string | null>(null);
 	const [submitting, setSubmitting] = useState(false);
 
 	const formatter = useDateTimeFormatter({ dateStyle: "short", timeStyle: "short" });
 	const humanReadableDate = formatter.format(new Date(existingComment!.date));
+
+	const canReply = useMemo(() => !children.find(x => x.id === -1), [children]);
 
 	const ImageWithFallbackMemo = useMemo(() => {
 		return <ImageWithFallback imageUrl={imageUrl} />
@@ -70,7 +73,8 @@ export function Comment(props: { existingComment: API.Comment, updateFn: (commen
 			return {
 				author,
 				text,
-				image: imageUrl ?? ""
+				image: imageUrl ?? "",
+				parentId: existingComment.parentId ?? null
 			};
 		}
 
@@ -102,6 +106,7 @@ export function Comment(props: { existingComment: API.Comment, updateFn: (commen
 				}
 
 				const updatedComment = await res.json();
+				updatedComment.children = [];
 				setMode("view");
 				updateFn(updatedComment);
 			} finally {
@@ -162,25 +167,54 @@ export function Comment(props: { existingComment: API.Comment, updateFn: (commen
 		</Loading>
 	}
 
-	return <div className="flex flex-col gap-2 p-8 mt-8 sm:flex-row sm:items-center sm:gap-6 sm:py-4">
-		<div className="flex-1">
-			{ImageWithFallbackMemo}
-		</div>
-		<div className="flex-12 space-y-2 text-center sm:text-left">
-			<div className="space-y-0.5">
-				<p className="text-sm font-semibold text-black">{author}</p>
-				<p className="font-medium text-gray-800 whitespace-pre-line">{text}</p>
-				<p className="text-xs text-gray-600">{humanReadableDate}</p>
+
+	function handleReply() {
+		if (!canReply) {
+			return;
+		}
+
+		const newComment: API.CommentResponse = {
+			id: -1,
+			author: "",
+			image: "",
+			likes: 0,
+			text: "",
+			date: new Date(),
+			children: [],
+			parentId: existingComment.id
+		}
+
+		setChildren(existingChildren => [newComment, ...existingChildren]);
+	}
+
+	return <div className="">
+		<div className="flex flex-row gap-2 p-4">
+			<div className="flex-1">
+				{ImageWithFallbackMemo}
 			</div>
-			<button className="mt-4 p-2 w-16 rounded-3xl border-purple-200 text-purple-600 hover:border-transparent hover:bg-purple-600 hover:text-white active:bg-purple-700" onClick={() => setMode("edit")}>
-				Edit
-			</button>
-		</div>
-		<div className="flex-1 space-y-2 text-center align-middle">
-			<div className="space-y-0.5 align-middle">
-				<button className="text-sm align-middle rounded-full border-purple-200 text-purple-600 hover:border-transparent hover:bg-purple-600 hover:text-white active:bg-purple-700" onClick={handleLike}><img className="w-8 h-8" src={upvote}></img></button>
-				<p className="text-sm align-middle">{likes}</p>
+			<div className="flex-12 space-y-2 text-center sm:text-left">
+				<div className="space-y-0.5">
+					<p className="text-sm font-semibold text-black">{author}</p>
+					<p className="font-medium text-gray-800 whitespace-pre-line">{text}</p>
+					<p className="text-xs text-gray-600">{humanReadableDate}</p>
+				</div>
+				<button className="mt-4 p-2 w-16 rounded-3xl border-purple-200 text-purple-600 hover:border-transparent hover:bg-purple-600 hover:text-white active:bg-purple-700" onClick={() => setMode("edit")}>
+					Edit
+				</button>
+				<button className="mt-4 p-2 w-16 rounded-3xl border-purple-200 text-purple-600 hover:border-transparent hover:bg-purple-600 hover:text-white active:bg-purple-700" onClick={handleReply}>
+					Reply
+				</button>
+			</div>
+			<div className="flex-1 space-y-2 text-center align-middle">
+				<div className="space-y-0.5 align-middle">
+					<button className="text-sm align-middle rounded-full border-purple-200 text-purple-600 hover:border-transparent hover:bg-purple-600 hover:text-white active:bg-purple-700" onClick={handleLike}><img className="w-8 h-8" src={upvote}></img></button>
+					<p className="text-sm align-middle">{likes}</p>
+				</div>
 			</div>
 		</div>
-	</div>;
+		<div className="flex flex-col ml-12 border-l-2 rounded-l-sm border-gray-100">
+			{children.map(child => <Comment key={child.id} existingComment={child} updateFn={() => { }} cancelFn={() => { }} />)}
+		</div>
+	</div>
+		;
 }

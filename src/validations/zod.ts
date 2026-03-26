@@ -37,7 +37,8 @@ export const zDateTime = z.iso.datetime()
 export const zComment = z.object({
 	author: z.string().min(1).max(100),
 	text: z.string().min(1).max(2000),
-	image: z.url().optional().default("").catch("")
+	image: z.url().optional().default("").catch(""),
+	parentId: z.coerce.number().optional().nullable().default(null).catch(null)
 });
 
 export function toValidationResponseBody<TSchema extends ZodType, TParseError extends ZodError<output<TSchema>>>(zodParseError: TParseError): Errors.ZodErrorResponse<TSchema> {

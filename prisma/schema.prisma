@@ -11,12 +11,15 @@ datasource db {
 }
 
 model Comment {
-    id     Int      @id @default(autoincrement())
-    author String
-    text   String
-    date   DateTime @default(now())
-    likes  Int
-    image  String
+    id       Int       @id @default(autoincrement())
+    author   String
+    text     String
+    date     DateTime  @default(now())
+    likes    Int
+    image    String
+    parentId Int?      @map("parent_id")
+    parent   Comment?  @relation("CommentThread", fields: [parentId], references: [id])
+    children Comment[] @relation("CommentThread")
 
     @@map("comments")
 }

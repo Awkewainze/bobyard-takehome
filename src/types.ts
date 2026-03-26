@@ -1,14 +1,17 @@
 export namespace API {
-	export type Comment = {
+	export type CommentResponse = {
 		id: number,
 		author: string,
 		text: string,
 		date: Date,
 		likes: number,
-		image: string
+		image: string,
+		parentId: number | null
+
+		children: API.CommentResponse[]
 	}
 
-	export type UpdateComment = Omit<Comment, "id" | "date" | "likes">;
+	export type UpdateComment = Omit<CommentResponse, "id" | "date" | "likes" | "children">;
 }
 
 export type Callback = () => void;
